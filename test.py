@@ -1,33 +1,38 @@
 import numpy as np
 import simpy
 import pandas as pd
-from utils import timeToSeconds, secondsToTime, generate_customers, get_intervals
+from utils import timeToSeconds, generate_customers, get_intervals, maximum_at_intervals
 
 np.random.seed(25)
 
-#Настройки симуляции всё время в секундах
-N_tickets_desk = 4
+#Настройки симуляции всё время указано в секундах
+N_tickets_desk = 10
 T_tickets = 45
-N_security = 4
+N_security = 10
 T_security = 60
-N_rooms = 3
-T_rooms_entarance = 45
-SIM_TIME = 3600
+N_rooms = 4
+T_rooms_entarance = 20
+SIM_TIME = 3600 * 4
 
 T_before_start = 15 #в минутах
 T_before_diviation = 5 #в минутах
-OPEN_TIME = "15:00"
+OPEN_TIME = "15:00" #время открытия, совпадает с начальной точкой по времени симуляции
 open_time_seconds = timeToSeconds(OPEN_TIME)
 
-tickets_queue = []
+#списоки с изменениями в длине очереди внутри содержит список [длина_очереди, время_изменения]
+tickets_queue = [] 
 security_queue = []
 room_queue = []
+
+#список со временем ожидания посетителя
 waiting_time = []
 
-current_tickets_queue = 0
+#текущая длина очереди
+current_tickets_queue = 0 
 current_security_queue = 0
 current_room_queue = 0
 people_served = 0
+
 
 class Cinema():
     def __init__(self, env : simpy.Environment, N_tickets_deck, T_tickets, N_security, T_security, N_rooms, T_rooms_entarance):
@@ -38,7 +43,8 @@ class Cinema():
         self.T_security = T_security
         self.N_rooms = simpy.Resource(env, N_rooms)
         self.T_rooms_entarance = T_rooms_entarance
-
+        
+    #отладочные функции
     def buy_tickets(self, customer_name):
         yield self.env.timeout(self.T_tickets)
         print(f'Customer {customer_name} buyed tickets at {self.env.now:.2f}')
@@ -51,10 +57,13 @@ class Cinema():
         yield self.env.timeout(self.T_rooms_entarance)
         print(f'Customer {customer_name} pass in cinema at {self.env.now:.2f}')
 
+#посетитель сначала идёт на кассу, затем на пост охраны, затем в зал
+#когда он подходит к пункту, он записывается в очередь, когда он отходит - он из неё выписывается
 def customer(env : simpy.Environment, customer_name : str, cinema : Cinema):
     global tickets_queue, security_queue, room_queue
     global current_tickets_queue, current_room_queue, current_security_queue
-    global people_served 
+    global people_served
+    
     print(f'Customer {customer_name} enters cinema at {env.now:.2f}')
     start = env.now
     with cinema.N_tickets_desk.request() as request:
@@ -101,14 +110,14 @@ def setup(env : simpy.Environment, N_tickets_deck, T_tickets, N_security, T_secu
     i = 0
     while True:
         if i < len(intervals):
-            yield env.timeout(intervals[i])
+            yield env.timeout(intervals[i]) #сначала были сгенирированы все потенциальные гости со временем их прибытия, затем вычислены интервалы между гостями
             env.process(customer(env, customers[i][1], cinema))
             i += 1
         else:
             break
         
-customers = generate_customers(pd.read_csv('movies.csv'), OPEN_TIME, T_before_start, T_before_diviation)
-intervals = get_intervals(customers)
+customers = generate_customers(pd.read_csv('movies.csv'), OPEN_TIME, T_before_start, T_before_diviation) #функция создаёт всех посетителей, которые должны придти
+intervals = get_intervals(customers) #вычисляет интервал прихода между двумя близжайшими по времени посетителями
 
 print("Simulation starts")
 
@@ -117,4 +126,17 @@ env.process(setup(env, N_tickets_desk, T_tickets, N_security, T_security, N_room
 env.run(until=SIM_TIME)
 
 print("Simulation ends")
-print(tickets_queue)
+
+import matplotlib.pyplot as plt
+
+ticket_x, ticket_y = maximum_at_intervals(tickets_queue, 900, open_time_seconds)
+security_x, security_y = maximum_at_intervals(security_queue, 900, open_time_seconds)
+room_x, room_y = maximum_at_intervals(room_queue, 900, open_time_seconds)
+
+plt.plot(ticket_x, ticket_y, label = 'Очередь на кассах')
+plt.plot(security_x, security_y, label = 'Очередь на охране')
+plt.plot(room_x, room_y, label='Очередь перед залом')
+
+plt.legend()
+plt.savefig('result.png')
+plt.show()
