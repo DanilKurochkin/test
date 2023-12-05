@@ -127,6 +127,10 @@ env.run(until=SIM_TIME)
 
 print("Simulation ends")
 
+print("\nSimulation Report")
+print(f"Peoples served:{people_served}")
+print(f"Average waiting time:{np.average(waiting_time)}")
+
 import matplotlib.pyplot as plt
 
 ticket_x, ticket_y = maximum_at_intervals(tickets_queue, 900, open_time_seconds)

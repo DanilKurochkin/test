@@ -13,7 +13,7 @@ def timeToSeconds(time : str) -> float: #перевод времени из фо
     
     return result
 
-def generate_customers(df : pd.DataFrame, OPEN_TIME, T_before_start, T_before_diviation) ->  list: #создаём всех посетителей, которые должные придти на заданные сеансы
+def generate_customers(df : pd.DataFrame, OPEN_TIME, T_before_start, T_before_diviation) ->  list[(float, str)]: #создаём всех посетителей, которые должные придти на заданные сеансы
     customers = []
     
     seconds_open = timeToSeconds(OPEN_TIME)
@@ -38,7 +38,7 @@ def get_intervals(customers : list) -> list[float]: #используя данн
     
     return intervals
 
-def maximum_at_intervals(data ,interval : float, open_time) -> (list[float], list[float]): #максимум на заданном интервале
+def maximum_at_intervals(data ,interval : float, open_time) -> (list[float], list[str]): #максимум на заданном интервале
     time = 0
     end = data[-1][1] // interval * interval + interval # округляем последнее время вверх, до числа кратному interval
     x = []
