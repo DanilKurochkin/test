@@ -13,7 +13,7 @@ def time_to_seconds(time : str) -> float: #перевод времени из ф
     
     return result
 
-def maximum_at_intervals(data ,interval : float, open_time) -> (list[float], list[str]): #максимум на заданном интервале
+def maximum_at_intervals(data ,interval : float, open_time) -> (list[str], list[float]): #максимум на заданном интервале
     time = 0
     end = data[-1][1] // interval * interval + interval # округляем последнее время вверх, до числа кратному interval
     x = []
@@ -28,7 +28,8 @@ def maximum_at_intervals(data ,interval : float, open_time) -> (list[float], lis
     
     return x, y
 
-def extend_arrays(*tuple_arrays : list[list[list, list]]):
+#нужно чтобы не было рваных графиков, в тех случайх когда на кассах уже давно пуста, а все изменения в очереди происходят на входе в кинозалы
+def extend_arrays(*tuple_arrays : list[list[list, list]]) -> None:
     max_array = max(tuple_arrays, key=lambda x: len(x[0]))
     max_n = len(max_array[0])
     for array in tuple_arrays:

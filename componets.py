@@ -13,6 +13,7 @@ class Cinema():
         self.N_rooms = simpy.Resource(env, N_rooms)
         self.T_rooms_entarance = T_rooms_entarance
         
+        #списки для построения графиков и подсчёта метрик
         self.tickets_queue = []
         self.security_queue = []
         self.room_queue = []
@@ -21,7 +22,8 @@ class Cinema():
         self.length_room_queue = 0
         self.length_security_queue = 0
         self.people_served = 0
-        
+        self.latecomers = 0
+
     #отладочные функции
     def buy_tickets(self, customer_name):
         yield self.env.timeout(self.T_tickets)
@@ -38,9 +40,10 @@ class Cinema():
 #посетитель сначала идёт на кассу, затем на пост охраны, затем в зал
 #когда он подходит к пункту, он записывается в очередь, когда он отходит - он из неё выписывается
 class Customer():
-    def __init__(self, name, arraival_time):
+    def __init__(self, name, arraival_time, movie_time):
         self.name = name
         self.arraival_time = arraival_time
+        self.movie_time = movie_time
         
     def enter(self, env : simpy.Environment, cinema : Cinema):
         
@@ -85,6 +88,9 @@ class Customer():
         end = env.now
         cinema.waiting_time.append(end - start)
         cinema.people_served += 1
+        if end > self.movie_time:
+            cinema.latecomers += 1
+            print(f'!!!LATE:Customer {self.name} was late to movie')
     
     def generate_customers(df : pd.DataFrame, OPEN_TIME, T_before_start, T_before_diviation) ->  list['Customer']: #создаём всех посетителей, которые должные придти на заданные сеансы
         customers = []
@@ -92,11 +98,11 @@ class Customer():
         seconds_open = time_to_seconds(OPEN_TIME)
         for i in range(len(df)): #для каждого отдельного сеанса создаём зрителей, с учетом того, что они приходят не одновременно, и собираем их в один список
             data_string = df.iloc[i]
-            seconds_start = time_to_seconds(data_string['start_time'])
+            seconds_start = time_to_seconds(data_string['start_time']) - seconds_open
             for j in range(data_string['total_viewers']):
-                arrival_time = max(0, np.random.normal(loc=seconds_start - seconds_open - T_before_start * 60,
+                arrival_time = max(0, np.random.normal(loc=seconds_start - T_before_start * 60,
                                                         scale=T_before_diviation * 60)) 
                 name = f'number№{j} to movie №{data_string["movie_number"]}'
-                customers.append(Customer(name, arrival_time))
+                customers.append(Customer(name, arrival_time, seconds_start))
 
         return customers

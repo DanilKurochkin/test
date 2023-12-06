@@ -4,6 +4,11 @@ import pandas as pd
 from componets import Cinema, Customer
 from utils import time_to_seconds, maximum_at_intervals, extend_arrays
 
+#В ТЗ об этом не просили, но это само напрашивается, будем считать что входов в конкретный кинозал ограниченное количество
+#в то время как кассы и посты охраны - общие для всех посетителей
+
+#так же посчитаем количество опаздавших на своё кино
+
 np.random.seed(2510)
 
 #Настройки симуляции всё время указано в секундах
@@ -11,9 +16,9 @@ N_tickets_desk = 10
 T_tickets = 45
 N_security = 10
 T_security = 60
-N_rooms = 4
+N_room_entarance = 4
 T_rooms_entarance = 20
-SIM_TIME = 3600 * 5
+SIM_TIME = 3600 * 2
 
 T_before_start = 15 #в минутах
 T_before_diviation = 5 #в минутах
@@ -25,7 +30,7 @@ print("Simulation starts")
  #функция создаёт всех посетителей, которые должны придти
 customers = Customer.generate_customers(pd.read_csv('movies.csv'), OPEN_TIME, T_before_start, T_before_diviation)
 env = simpy.Environment()
-cinema = Cinema(env, N_tickets_desk, T_tickets, N_security, T_security, N_rooms, T_rooms_entarance)
+cinema = Cinema(env, N_tickets_desk, T_tickets, N_security, T_security, N_room_entarance, T_rooms_entarance)
 for customer in customers:
     env.process(customer.enter(env, cinema))
 env.run(until=SIM_TIME)
@@ -33,8 +38,9 @@ print("Simulation ends")
 
 
 print("\nSimulation Report")
-print(f"Peoples served:{cinema.people_served}")
-print(f"Average waiting time:{np.average(cinema.waiting_time)}")
+print(f"Peoples served: {cinema.people_served}")
+print(f"Latecomers: {cinema.latecomers}")
+print(f"Average waiting time: {np.average(cinema.waiting_time)}")
 
 
 import matplotlib.pyplot as plt
