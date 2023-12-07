@@ -35,7 +35,8 @@ class Cinema():
         self.people_served = 0 #количество обслуженных посетителей
         self.latecomers = 0 #количество опоздавших
 
-    #отладочные функции
+    #вывод в этих функциях для отладки
+    #а так они просто симулируют задержку покупатяле при обслуживании на данном пропускном пункте
     def buy_tickets(self, customer_name):
         yield self.env.timeout(self.T_tickets)
         print(f'Customer {customer_name} buyed tickets at {self.env.now:.2f}')
