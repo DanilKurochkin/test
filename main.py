@@ -1,7 +1,7 @@
 import numpy as np
 import simpy
 import pandas as pd
-from componets import Cinema, Customer
+from models import Cinema, Customer
 from utils import time_to_seconds, maximum_at_intervals, extend_arrays
 
 #будем считать что в зал конкретный зал можно попасть только через определённое количество проходов, привязанных конкретно к этому сеансу
@@ -11,19 +11,20 @@ movies_schedule = pd.read_csv('movies.csv')
 np.random.seed(2510)
 
 #Настройки симуляции всё время указано в секундах
-N_tickets_desk = 10
-T_tickets = 10
-N_security = 10
-T_security = 10
-N_room_entarance = 4
-T_rooms_entarance = 20
-N_movies = len(movies_schedule)
-SIM_TIME = 3600 * 4
+N_tickets_desk = 10 #количество касс
+T_tickets = 50 #время обслуживания на кассе
+N_security = 5 #количество охранных пропусков
+T_security = 30 #время досмотра
+N_room_entarance = 3 #количество входов в кинозал
+T_rooms_entarance = 15 #время входа в кинозал
+N_movies = len(movies_schedule) #количество фильмов в расписании
+SIM_TIME = 3600 * 4 #длительность симуляции
 
-T_before_start = 15 #в минутах
-T_before_diviation = 5 #в минутах
+T_before_start = 15 #среднее время прихода до фильма в минутах
+T_before_diviation = 5 #стандартное отклонение времени прихода в минутах
 OPEN_TIME = "15:00" #время открытия, совпадает с начальной точкой по времени симуляции
 open_time_seconds = time_to_seconds(OPEN_TIME) #приведём время открытия к секунам
+
 
 #Запуск симуляции
 print("Simulation starts")
