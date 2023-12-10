@@ -2,7 +2,7 @@ import numpy as np
 import simpy
 import pandas as pd
 from models import Cinema, Customer
-from utils import time_to_seconds, maximum_at_intervals, extend_arrays
+from utils import time_to_seconds, maximum_at_intervals
 
 #будем считать что в зал конкретный зал можно попасть только через определённое количество проходов, привязанных конкретно к этому сеансу
 #если не очень понятно, то я имел ввиду, можете взглянуть на итоговый график, там сразу всё видно
@@ -12,11 +12,11 @@ np.random.seed(2510)
 
 #Настройки симуляции всё время указано в секундах
 N_tickets_desk = 10 #количество касс
-T_tickets = 50 #время обслуживания на кассе
-N_security = 5 #количество охранных пропусков
-T_security = 30 #время досмотра
-N_room_entarance = 3 #количество входов в кинозал
-T_rooms_entarance = 15 #время входа в кинозал
+T_tickets = 10 #время обслуживания на кассе
+N_security = 10 #количество охранных пропусков
+T_security = 10 #время досмотра
+N_room_entarance = 4 #количество входов в кинозал
+T_rooms_entarance = 20 #время входа в кинозал
 N_movies = len(movies_schedule) #количество фильмов в расписании
 SIM_TIME = 3600 * 4 #длительность симуляции
 
@@ -46,12 +46,9 @@ print(f"Average waiting time: {np.average(cinema.waiting_time)}")
 import matplotlib.pyplot as plt
 
 #получим максимумальную длину очередей на 15 минутных интервалах
-ticket_x, ticket_y = maximum_at_intervals(cinema.tickets_queue, 900, open_time_seconds)
-security_x, security_y = maximum_at_intervals(cinema.security_queue, 900, open_time_seconds)
-room_x, room_y = maximum_at_intervals(cinema.room_queue, 900, open_time_seconds)
-
-#уберём разрывы на графиках
-extend_arrays([ticket_x, ticket_y], [security_x, security_y], [room_x, room_y])
+ticket_x, ticket_y = maximum_at_intervals(cinema.tickets_queue, 900, SIM_TIME, open_time_seconds)
+security_x, security_y = maximum_at_intervals(cinema.security_queue, 900, SIM_TIME, open_time_seconds)
+room_x, room_y = maximum_at_intervals(cinema.room_queue, 900, SIM_TIME, open_time_seconds)
 
 #итоговые графики
 figure, (ax1, ax2) = plt.subplots(1, 2, figsize=(14,6))
@@ -59,12 +56,13 @@ figure, (ax1, ax2) = plt.subplots(1, 2, figsize=(14,6))
 ax1.plot(ticket_x, ticket_y, label = 'Очередь на кассах')
 ax1.plot(security_x, security_y, label = 'Очередь на охране')
 ax1.plot(room_x, room_y, label='Очередь перед залом (общая)')
+ax1.tick_params(axis='x', rotation=90)
 ax1.set_title('Очереди на проходных пунктах')
 ax1.legend()
 
 ax2.tick_params(axis='x', rotation=90)
 for i in range(len(cinema.queue_room_per_movie)):
-    x, y = maximum_at_intervals(cinema.queue_room_per_movie[i], 300, open_time_seconds)
+    x, y = maximum_at_intervals(cinema.queue_room_per_movie[i], 900, SIM_TIME, open_time_seconds)
     ax2.plot(x, y, label=f'Очередь на фильм №{i+1}')
 ax2.set_title('Очереди в разные кинозалы')
 ax2.legend()
